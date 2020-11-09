@@ -1,9 +1,9 @@
 import numpy as np
 import pandas as pd
-import csv
 from nltk import ngrams
 import glob
 import time
+from itertools import combinations
 
 np.random.seed(0)
 
@@ -20,7 +20,7 @@ class shingling:
         self.k = k
         self.characteristic_matrix = None
 
-    def run(self):
+    def fit_transform(self):
         list_hashed = []
         for i in range(nrow):
             tokens = self.docs[i].split()
@@ -51,7 +51,7 @@ class minhashing:
         self.k_signature = k_signature
         self.signature_matrix = None
 
-    def run(self):
+    def fit_transform(self):
         nrow_matrix = self.characteristic_matrix.shape[0]
         prime = nrow_matrix + 1
         coef_a = np.random.choice(nrow_matrix, size=self.k_signature, replace=False)
@@ -82,7 +82,28 @@ class minhashing:
                     sign_sim = sign_sim.append({'Doc1': 'Doc'+str(i), 'Doc2': 'Doc'+str(j), 'Signature_Score': sign_score}, ignore_index=True)
         
         return sign_sim
-            
+
+class lsh:
+
+    def __init__(self, signature_matrix, bands, rows, threshold):
+        self.signature_matrix = signature_matrix
+        self.bands = bands
+        self.rows = rows
+        self.threshold = threshold
+
+    def fit_transform(self):
+        num_cols = self.signature_matrix.shape[1]
+        candidates = set()
+
+        for i in range(self.bands):
+            for j in list(combinations(range(num_cols), 2)):
+                col1 = self.signature_matrix.iloc[i * self.rows : (i + 1) * self.rows, j[0]]
+                col2 = self.signature_matrix.iloc[i * self.rows : (i + 1) * self.rows, j[1]]
+                sims = col1.eq(col2).sum()/self.rows
+                if sims >= self.threshold:
+                    candidates.add((j[0], j[1]))
+
+        return candidates
 
 if __name__ == "__main__":
     start_time = time.time()
@@ -101,14 +122,12 @@ if __name__ == "__main__":
 
     start_time = time.time()
     docs_shingling = shingling(corpus, 3)
-
-    jaccard_similarity = docs_shingling.run()
+    jaccard_similarity = docs_shingling.fit_transform()
     print("Shingling success! in {} secs".format(round(time.time() - start_time, 2)))
 
     start_time = time.time()
     docs_minhashing = minhashing(docs_shingling.characteristic_matrix, 9)
-
-    signature_similarity = docs_minhashing.run()
+    signature_similarity = docs_minhashing.fit_transform()
     print("MinHashing success! in {} secs".format(round(time.time() - start_time, 2)))
 
     most_similar = pd.merge(jaccard_similarity, signature_similarity, on=['Doc1','Doc2']).sort_values(by='Signature_Score', ascending=False).reset_index(drop=True).loc[0]
@@ -124,3 +143,13 @@ if __name__ == "__main__":
     print("Document 2:")
     print(corpus[doc2])
 
+    start_time = time.time()
+    docs_lsh = lsh(docs_minhashing.signature_matrix, 25, 4, 0.8)
+    pair_candidates = docs_lsh.fit_transform()
+    print("Locality Sensitive Hashing success! in {} secs".format(round(time.time() - start_time, 2)))
+
+    print("Sample Pair of Candidates:")
+    print("Document 1:")
+    print(corpus[next(iter(pair_candidates))[0]])
+    print("Document 2:")
+    print(corpus[next(iter(pair_candidates))[1]])
