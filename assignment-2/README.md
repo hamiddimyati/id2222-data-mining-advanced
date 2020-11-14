@@ -1,4 +1,4 @@
-# Frequent Itemsets
+# Apriori algorithm
 
 ## Task 1: 
 Implement the Apriori algorithm for finding frequent itemsets with support at least s in a dataset of sales transactions.
