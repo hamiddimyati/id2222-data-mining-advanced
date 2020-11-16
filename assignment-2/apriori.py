@@ -59,7 +59,7 @@ class frequentItemsets:
 
         return final_itemsets, non_singleton
 
-class associationRule:
+class associationRules:
 
     def __init__(self, min_confidence):
         self.min_confidence = min_confidence
@@ -100,7 +100,7 @@ if __name__ == "__main__":
 
     print("Finding the available association rules with minimum confidence {}:".format(min_confidence))
     # Association Rules
-    AR = associationRule(min_confidence)
+    AR = associationRules(min_confidence)
     rules = AR.fitTransform(itemsets, non_singleton)
 
     SHOW = 15
