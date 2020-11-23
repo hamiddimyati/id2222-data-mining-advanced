@@ -3,6 +3,7 @@ import random
 import pandas as pd
 import matplotlib.pyplot as plt
 from collections import defaultdict
+import time
 
 class edges:
     def __init__(self):
@@ -147,7 +148,7 @@ class triestImprove:
                     
         global_triangles = self.global_counter
         
-        return float(global_triangles)
+        return int(global_triangles)
                 
     def sample(self, u, v):
         if self.t <= self.memory:
@@ -208,15 +209,28 @@ if __name__ == '__main__':
         global_triangles = graph_streaming.fit(filename)
         return global_triangles
     
-    x=[int(element * 289003/10) for element in list(range(1,11))]
-    #x = [1000*i for i in range(1,4)]
-    y1=[]
-    y2=[]
-    for i in x:
-        y1.append(baseloop(i))
-        y2.append(improveloop(i))
+    #x=[int(element * 289003/10) for element in list(range(1,11))]
+    #y1=[]
+    #y2=[]
+    #for i in x:
+    #    y1.append(baseloop(i))
+    #    y2.append(improveloop(i))
         
-    df=pd.DataFrame({'x': x, 'y1' : y1, 'y2' : y2})
-    plt.plot('x', 'y1', '', data=df, marker='', color='skyblue', linewidth=2)
-    plt.plot('x', 'y2', '', data=df, marker='', color='olive', linewidth=2)
-    plt.legend()
+    #df=pd.DataFrame({'x': x, 'y1' : y1, 'y2' : y2})
+    #plt.plot('x', 'y1', '', data=df, marker='', color='skyblue', linewidth=2)
+    #plt.plot('x', 'y2', '', data=df, marker='', color='olive', linewidth=2)
+    #plt.legend()
+
+    M = 10000
+    print("Estimating Global Triangles of Graph using Memory Size: {}".format(M))
+    print("Ground truth: 523810")
+
+    start = time.time()
+    graph_streaming = triestBase(M)
+    global_triangles = graph_streaming.fit(filename)
+    print("Estimation by Triest Base: {} in {}s".format(global_triangles, round(time.time()-start, 3)))
+
+    start = time.time()
+    graph_streaming = triestImprove(M)
+    global_triangles = graph_streaming.fit(filename)
+    print("Estimation by Triest Improve: {} in {}s".format(global_triangles, round(time.time()-start, 3)))
