@@ -29,10 +29,10 @@ public class CLI {
   private int UNIFORM_RAND_SAMPLE_SIZE = 6;
 
   @Option(name = "-temp", usage = "Simulated annealing temperature.")
-  private float TEMPERATURE = 1;
+  private float TEMPERATURE = 2;
 
   @Option(name = "-delta", usage = "Simulated annealing delta.")
-  private float DELTA = (float) 0.01;
+  private float DELTA = (float) 0.001;
 
   @Option(name = "-seed", usage = "Seed.")
   private int SEED = 0;
