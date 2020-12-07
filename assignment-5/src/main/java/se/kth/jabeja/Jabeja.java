@@ -49,12 +49,7 @@ public class Jabeja {
     this.numberOfSwaps = 0;
     this.config = config;
     this.T = config.getTemperature();
-    
-    /*
-    if (smartRedistribute) {
-      Reinit.redistributeColors(entireGraph, config);
-    }
-    */
+
   }
 
   //-------------------------------------------------------------------
@@ -88,17 +83,6 @@ public class Jabeja {
     }
   }
 
-  /*
-  private void saCoolDownExponential() {
-    if (T < 0.00001) {
-      T *= config.getDelta();
-    } else {
-      if (reset)
-        T = config.getTemperature();
-    }
-  }
-  */
-
   private void saCoolDownExponential() {
     T *= config.getDelta();
     if (T < 0.001 && reset)
@@ -117,15 +101,13 @@ public class Jabeja {
     // Swap with random neighbors
     if (config.getNodeSelectionPolicy() == NodeSelectionPolicy.HYBRID
             || config.getNodeSelectionPolicy() == NodeSelectionPolicy.LOCAL) {
-      Integer neighbours[] = getNeighbors(nodep);
-      partner = findPartner(nodeId, neighbours);
+      partner = findPartner(nodeId, getNeighbors(nodep));
     }
 
     // If local policy fails then randomly sample the entire graph
     if ((config.getNodeSelectionPolicy() == NodeSelectionPolicy.HYBRID && partner == null)
             || config.getNodeSelectionPolicy() == NodeSelectionPolicy.RANDOM) {
-      Integer sample[] = getSample(nodeId);
-      partner = findPartner(nodeId, sample);
+      partner = findPartner(nodeId, getSample(nodeId));
     }
 
     // Swap the colors
@@ -146,17 +128,19 @@ public class Jabeja {
 
     Float a = config.getAlpha();
 
-    for (Integer q : nodes) {
-      Node nodeq = entireGraph.get(q);
-      int dpp = getDegree(nodep, nodep.getColor());
-      int dqq = getDegree(nodeq, nodeq.getColor());
-      double oldC = pow(dpp, a) + pow(dqq, a);
-      int dpq = getDegree(nodep, nodeq.getColor());
-      int dqp = getDegree(nodeq, nodep.getColor());
-      double newC = pow(dpq, a) + pow(dqp, a);
-      if (acceptSolution(oldC, newC, highestBenefit)) {
+    for (Integer node : nodes) {
+      Node nodeq = entireGraph.get(node);
+      int dPP = getDegree(nodep, nodep.getColor());
+      int dQQ = getDegree(nodeq, nodeq.getColor());
+      double oldEnergy = pow(dPP, a) + pow(dQQ, a);
+
+      int dPQ = getDegree(nodep, nodeq.getColor());
+      int dQP = getDegree(nodeq, nodep.getColor());
+      double newEnergy = pow(dPQ, a) + pow(dQP, a);
+
+      if (acceptSolution(oldEnergy, newEnergy, highestBenefit)) {
         bestPartner = nodeq;
-        highestBenefit = newC;
+        highestBenefit = newEnergy;
       }
       if (var == Variation.EXPONENTIAL)
         break; // only try one partner
@@ -165,13 +149,13 @@ public class Jabeja {
     return bestPartner;
   }
 
-  private boolean acceptSolution(double oldC, double newC, double highestBenefit) {
+  private boolean acceptSolution(double oldEnergy, double newEnergy, double highestBenefit) {
     switch (var) {
       case LINEAR:
-        return newC > highestBenefit && newC * T > oldC;
+        return newEnergy > highestBenefit && newEnergy * T > oldEnergy;
       case EXPONENTIAL:
         Random r = new Random();
-        return r.nextDouble() < exp((1 / oldC - 1 / newC) / T);
+        return r.nextDouble() < exp((1 / oldEnergy - 1 / newEnergy) / T);
       default:
         return false;
     }
