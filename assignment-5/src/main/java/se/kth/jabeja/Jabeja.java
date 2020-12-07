@@ -19,6 +19,7 @@ public class Jabeja {
   private int round;
   private float T;
   private boolean resultFileCreated = false;
+  private boolean reset = true;
 
   //-------------------------------------------------------------------
   public Jabeja(HashMap<Integer, Node> graph, Config config) {
@@ -48,12 +49,26 @@ public class Jabeja {
   /**
    * Simulated anealing cooling function
    */
+
+  // TODO for second task  
+
+  /*
   private void saCoolDown(){
-    // TODO for second task
-    if (T > 1)
+    if (T > 1) {
       T -= config.getDelta();
-    if (T < 1)
-      T = 1;
+    } else {
+      if (reset) 
+        T = config.getTemperature();
+      else
+        T = 1;
+    }
+  }
+  */
+
+  private void saCoolDown(){
+    T *= config.getDelta();
+    if (T < 0.001 && reset)
+      T = config.getTemperature();
   }
 
   /**
